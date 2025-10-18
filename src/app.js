@@ -10,6 +10,7 @@ const usersRouter = require('./routes/users.routes');
 const notFound = require('./middleware/notFound.middleware');
 const errorHandler = require('./middleware/error.middleware');
 const mongoose = require('mongoose');
+const path = require('path');
 const getCorsConfig = require('../cors-config');
 
 function createApp() {
@@ -22,6 +23,9 @@ function createApp() {
   app.use(cors(getCorsConfig()));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // 정적 이미지 제공 (API 경로보다 먼저 등록해야 함)
+  app.use('/images', express.static(path.join(__dirname, 'data/images')));
 
   const clientOrigins = [
     process.env.CLIENT_URL,
