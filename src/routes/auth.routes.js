@@ -17,7 +17,7 @@ router.post('/login', isNotAuthenticated, authController.login);
 router.post('/logout', isAuthenticated, authController.logout);
 
 // 현재 사용자 정보
-router.get('/me', isAuthenticated, authController.getCurrentUser);
+router.get('/me', authController.getCurrentUser);
 
 // ==================== 구글 OAuth ====================
 // 구글 로그인 시작

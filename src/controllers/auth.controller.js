@@ -118,9 +118,10 @@ class AuthController {
    */
   getCurrentUser = asyncHandler(async (req, res) => {
     if (!req.user) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: '로그인이 필요합니다.',
+        data: { user: null },
       });
     }
 
