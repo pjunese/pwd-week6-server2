@@ -23,6 +23,47 @@ function createApp() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
+  const clientOrigins = [
+    process.env.CLIENT_URL,
+    process.env.PRODUCTION_CLIENT_URL,
+    process.env.DEFAULT_CLIENT_URL,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const isLocalOrigin = (origin) => /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(origin);
+  const hasLocalhostClient = clientOrigins.some(isLocalOrigin);
+  const hasExternalClient = clientOrigins.some((origin) => !isLocalOrigin(origin));
+
+  const sessionSecureEnv = process.env.SESSION_COOKIE_SECURE?.toLowerCase();
+  const forceSecureCookie = sessionSecureEnv === 'true';
+  const forceInsecureCookie = sessionSecureEnv === 'false';
+  const defaultSecure = process.env.NODE_ENV === 'production' || process.env.FORCE_SECURE_COOKIE === 'true';
+  const shouldUseSecureCookie = forceSecureCookie
+    ? true
+    : forceInsecureCookie
+      ? false
+      : hasExternalClient
+        ? true
+        : defaultSecure;
+
+  const sameSiteOverride = process.env.SESSION_COOKIE_SAMESITE?.toLowerCase();
+  const validSameSiteValues = new Set(['lax', 'strict', 'none']);
+  const sameSiteValue = validSameSiteValues.has(sameSiteOverride)
+    ? sameSiteOverride
+    : shouldUseSecureCookie
+      ? 'none'
+      : 'lax';
+
+  console.log('🛡️ Session cookie config:', {
+    secure: shouldUseSecureCookie,
+    sameSite: sameSiteValue,
+    clientOrigins,
+    nodeEnv: process.env.NODE_ENV,
+  });
+
   // 세션 설정
   const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
@@ -31,8 +72,8 @@ function createApp() {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // HTTPS에서만 쿠키 전송
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: shouldUseSecureCookie, // HTTPS에서만 쿠키 전송
+      sameSite: sameSiteValue,
     },
   };
 
