@@ -8,7 +8,9 @@ require('dotenv').config();
 const changeUserType = async (email, newUserType) => {
   try {
     // 데이터베이스 연결
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ajou-foodmap');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ajou-foodmap', {
+      dbName: process.env.DB_NAME || 'foodmap-db',
+    });
     console.log('데이터베이스에 연결되었습니다.');
 
     // 사용자 찾기
